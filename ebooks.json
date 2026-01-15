@@ -1,0 +1,12 @@
+[
+    {
+        "title": "Kleines Dokument",
+        "author": "Max Mustermann",
+        "file": "eBooks/minimal-document.pdf"
+    },
+    {
+        "title": "Dokument mit Bild",
+        "author": "John Doe",
+        "file": "eBooks/base64image.pdf"
+    }
+]
