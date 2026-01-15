@@ -17,7 +17,15 @@ async function loadEbooks() {
         }
         allEbooks = await response.json();
         
-        // Lade Metadaten für alle eBooks
+        // Prüfe ob Array leer ist
+        if (!Array.isArray(allEbooks) || allEbooks.length === 0) {
+            console.log('Keine eBooks gefunden');
+            ebooksWithMetadata = [];
+            showEmptyState();
+            return;
+        }
+        
+        // Lade Metadaten für alle eBooks mit Timeout
         ebooksWithMetadata = await Promise.all(
             allEbooks.map(async (ebook) => {
                 const metadata = await getEbookMetadata(ebook.file);
@@ -31,6 +39,7 @@ async function loadEbooks() {
         displayEbooks(ebooksWithMetadata);
     } catch (error) {
         console.error('Fehler beim Laden der eBooks:', error);
+        ebooksWithMetadata = [];
         showEmptyState();
     }
 }
@@ -38,14 +47,22 @@ async function loadEbooks() {
 // Hole Metadaten für ein eBook (Dateigröße und Seitenanzahl)
 async function getEbookMetadata(filePath) {
     const metadata = {
-        size: 'Laden...',
+        size: 'N/A',
         pages: '—',
         sizeBytes: 0
     };
 
     try {
-        // Hole Dateigröße
-        const response = await fetch(filePath, { method: 'HEAD' });
+        // Hole Dateigröße mit Timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 Sekunden Timeout
+        
+        const response = await fetch(filePath, { 
+            method: 'HEAD',
+            signal: controller.signal 
+        });
+        clearTimeout(timeoutId);
+        
         if (response.ok) {
             const contentLength = response.headers.get('Content-Length');
             if (contentLength) {
@@ -54,15 +71,20 @@ async function getEbookMetadata(filePath) {
             }
         }
 
-        // Hole Seitenanzahl mit PDF.js
+        // Hole Seitenanzahl mit PDF.js (mit Timeout)
         try {
-            const pdf = await pdfjsLib.getDocument(filePath).promise;
+            const loadingTask = pdfjsLib.getDocument(filePath);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('PDF Timeout')), 5000)
+            );
+            const pdf = await Promise.race([loadingTask.promise, timeoutPromise]);
             metadata.pages = pdf.numPages.toString();
         } catch (pdfError) {
-            console.warn('PDF Seitenanzahl konnte nicht geladen werden:', pdfError);
+            console.warn(`PDF Seitenanzahl für ${filePath} konnte nicht geladen werden:`, pdfError.message);
+            metadata.pages = '—';
         }
     } catch (error) {
-        console.warn('Metadaten konnten nicht geladen werden:', error);
+        console.warn(`Metadaten für ${filePath} konnte nicht geladen werden:`, error.message);
     }
 
     return metadata;
