@@ -77,6 +77,12 @@ Dann öffne im Browser: **http://localhost:8000**
 
 Die Anwendung ist optimiert für GitHub Pages und wird automatisch bereitgestellt.
 
+**Wichtig:** Diese Anwendung ist eine reine statische Website (HTML/CSS/JS) und benötigt **kein Jekyll**. Die Datei `.nojekyll` sorgt dafür, dass GitHub Pages die Dateien direkt bereitstellt, ohne Jekyll-Verarbeitung. Das bedeutet:
+- ✅ Schnellere Deployments
+- ✅ Keine Jekyll-Abhängigkeiten
+- ✅ Dateien mit Unterstrichen (`_config.yml`) werden nicht ignoriert
+- ✅ Das lokale Testen mit Python HTTP Server entspricht exakt dem GitHub Pages Verhalten
+
 ## 📄 Lizenz
 
 Frei verwendbar für persönliche Projekte.
